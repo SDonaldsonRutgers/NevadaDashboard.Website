@@ -1,0 +1,191 @@
+---
+title: "Nevada County TUPE Tracking Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    theme: cerulean
+    orientation: rows
+    vertical_layout: fill
+    source_code: embed
+---
+
+```{r Data Management, echo=FALSE}
+#Working Directory and Packages
+setwd("~/Desktop/UCSD/TUPE/Evaluation/Dashboard/TUPEDashboards/GranteeDashboards/Nevada")
+library(flexdashboard)
+library(knitr)
+library(DT)
+library(rpivotTable)
+library(ggplot2)
+library(plotly)
+library(plyr)
+library(dplyr)
+library(readxl)
+library(tidyverse)
+library(crosstalk)
+library(leaflet)
+library(htmltools)
+library(rgdal)
+library(geojsonio)
+library(rjson)
+library(scatterD3)
+library(scales)
+library(formattable)
+
+#Read Excel
+Nevada.Tracking <-read_excel("~/Desktop/UCSD/TUPE/Evaluation/Dashboard/TUPEDashboards/GranteeDashboards/Nevada/Nevada.TrackingData.xlsx")
+
+# RecodeVariables
+Nevada.Tracking$SchoolSite       <- as.factor(Nevada.Tracking$SchoolSite)
+Nevada.Tracking$ClassSection     <- as.factor(Nevada.Tracking$ClassSection)
+Nevada.Tracking$ActivityName     <- as.factor(Nevada.Tracking$ActivityName)
+Nevada.Tracking$TargetPopulation <- as.character(Nevada.Tracking$TargetPopulation)
+Nevada.Tracking$Session          <- as.numeric(Nevada.Tracking$Session)
+Nevada.Tracking$Engagement       <- revalue(Nevada.Tracking$Engagement,
+                                      c("Low"   = "1", 
+                                        "Medium"= "2",
+                                        "High"  = "3"))
+Nevada.Tracking$Engagement       <- as.numeric(Nevada.Tracking$Engagement)
+Nevada.Tracking$CoordinatorName  <- as.factor(Nevada.Tracking$CoordinatorName)
+
+##Round Variables
+Nevada.Tracking$AbsoluteReach        <- round(Nevada.Tracking$AbsoluteReach , digits = 1)
+Nevada.Tracking$Engagement           <- round(Nevada.Tracking$Engagement, digits = 1)
+Nevada.Tracking$Satisfaction_Jan         <- round(Nevada.Tracking$Satisfaction_Jan, digits = 1)
+Nevada.Tracking$UnduplicatedReach    <- round(Nevada.Tracking$UnduplicatedReach, digits = 1)
+
+```
+
+# Nov.20-Jan.21
+
+## row {data-height="100"}
+
+### TUPE Activities
+
+```{r}
+Activities <- Nevada.Tracking %>% 
+              group_by(ActivityName) %>% 
+              summarize(CountAct = length(unique(ActivityName)))
+
+valueBox(length(Activities$ActivityName),
+         icon    = 'fa-briefcase',
+         color   = "#60E62E")
+
+```
+
+### Unduplicated Reach
+
+```{r Reach Re}
+U.Reach <- sum(Nevada.Tracking$UnduplicatedReach,
+               na.rm = TRUE)
+U.Reach <- round(U.Reach,
+                 digits = 1)
+
+valueBox(U.Reach, 
+         icon    = 'fa-school',
+         color   = "orange")
+```
+
+### Average Student Engagement
+
+```{r Engagement}
+Engagement <- mean(Nevada.Tracking$Engagement, na.rm = TRUE)
+
+Engagement <- round((Engagement),
+                     digits = 2)
+
+gauge(Engagement,
+  sectors = gaugeSectors(
+            success = c(2,3),
+            warning = c(1,1.9),
+            danger = c(0,1),
+            colors = c("purple", 
+                       "blue", 
+                       "red")),
+  min = 0,
+  max = 3)
+```
+
+### Average Coordinator Satisfaction
+
+```{r Satisfaction}
+Satisfaction <- mean(Nevada.Tracking$Satisfaction_Jan, na.rm = TRUE)
+
+Satisfaction <- round((Satisfaction),
+                     digits = 2)
+
+gauge(Satisfaction,
+  sectors = gaugeSectors(
+            success = c(4,5),
+            warning = c(2.1,3.9),
+            danger = c(0,2),
+            colors = c("gold", 
+                       "blue", 
+                       "red")),
+  min = 0,
+  max = 5)
+
+    
+```
+
+## row {.tabset}
+
+### Summary 
+
+```{r Pivot Table}
+rpivotTable(Nevada.Tracking,
+            rows = c("ActivityName",
+                     "TargetPopulation"),
+            cols = "CoordinatorName",
+            rendererName = "Stacked Bar Chart"
+            )
+
+```
+
+### Student Reach 
+
+```{r Reach Plot}
+Student_reach <- SharedData$new(Nevada.Tracking, ~ActivityName)
+
+
+ggplotly(ggplot(data=Student_reach, 
+                    aes(x=reorder(CoordinatorName, 
+                                  -UnduplicatedReach, 
+                                  FUN = sum),
+                        y = UnduplicatedReach,
+                        fill=TargetPopulation)) +
+                    geom_bar(stat="identity",
+                             position = "stack") +
+                    scale_y_continuous(limits = c(0, 100),
+                             breaks = c(0,
+                                        25,
+                                        50,
+                                        75,
+                                        100)) +
+                    scale_x_discrete(labels=c("C.Deakers",
+                                              "S.Crossen",
+                                              "J.Jargick",
+                                              "A.Ford",
+                                              "J.Parks",
+                                              "K.Casey",
+                                              "B.Fowler",
+                                              "D.Griffin",
+                                              "D.Cormia",
+                                              "J.Parkhouse",
+                                              "J.Hardin",
+                                              "J.Nocerino",
+                                              "K.Stephensen",
+                                              "K.Owens",
+                                              "N.Ziesler",
+                                              "N.Voorhes",
+                                              "S.Mertz",
+                                              "S.O'Call"
+                                              )) +
+                    theme_classic() + 
+                    labs(title = "Student Reach Profile",
+                         x     = "Coordinator Name",
+                         y     = "Unduplicated Reach")
+)
+
+                             
+```
+
