@@ -55,7 +55,7 @@ Nevada.Tracking$UnduplicatedReach    <- round(Nevada.Tracking$UnduplicatedReach,
 
 ```
 
-# Nov.20-Jan.21
+# Jan.2021
 
 ## row {data-height="100"}
 
@@ -74,7 +74,7 @@ valueBox(length(Activities$ActivityName),
 
 ### Unduplicated Reach
 
-```{r Reach Re}
+```{r Reach}
 U.Reach <- sum(Nevada.Tracking$UnduplicatedReach,
                na.rm = TRUE)
 U.Reach <- round(U.Reach,
@@ -148,38 +148,18 @@ Student_reach <- SharedData$new(Nevada.Tracking, ~ActivityName)
 
 
 ggplotly(ggplot(data=Student_reach, 
-                    aes(x=reorder(CoordinatorName, 
-                                  -UnduplicatedReach, 
-                                  FUN = sum),
+                    aes(x=CoordinatorName,
                         y = UnduplicatedReach,
                         fill=TargetPopulation)) +
                     geom_bar(stat="identity",
                              position = "stack") +
-                    scale_y_continuous(limits = c(0, 100),
+                    scale_y_continuous(limits = c(0, 350),
                              breaks = c(0,
-                                        25,
                                         50,
-                                        75,
-                                        100)) +
-                    scale_x_discrete(labels=c("C.Deakers",
-                                              "S.Crossen",
-                                              "J.Jargick",
-                                              "A.Ford",
-                                              "J.Parks",
-                                              "K.Casey",
-                                              "B.Fowler",
-                                              "D.Griffin",
-                                              "D.Cormia",
-                                              "J.Parkhouse",
-                                              "J.Hardin",
-                                              "J.Nocerino",
-                                              "K.Stephensen",
-                                              "K.Owens",
-                                              "N.Ziesler",
-                                              "N.Voorhes",
-                                              "S.Mertz",
-                                              "S.O'Call"
-                                              )) +
+                                        100,
+                                        200,
+                                        350)) +
+                    scale_x_discrete(label=abbreviate) +
                     theme_classic() + 
                     labs(title = "Student Reach Profile",
                          x     = "Coordinator Name",
